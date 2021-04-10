@@ -1,0 +1,30 @@
+server:
+  port: 8080
+  error.whitelabel.enabled: false
+
+management:
+  server:
+    port: 8082
+  endpoints:
+    web:
+      base-path: '/'
+      exposure:
+        include: '*'
+
+spring:
+  mvc.servlet.load-on-startup: 1
+  kafka:
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+      properties:
+        schema:
+          registry:
+            url: http://localhost:8081
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+      properties:
+        schema:
+          registry:
+            url: http://localhost:8081

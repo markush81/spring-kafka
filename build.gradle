@@ -1,0 +1,50 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '2.3.9.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+}
+
+// === Repository config ===
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven {
+        url 'https://packages.confluent.io/maven/'
+    }
+}
+
+// === JAVA configuration ===
+compileJava {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+// === Dependencies ===
+dependencies {
+    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
+
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.kafka:spring-kafka'
+    implementation ('io.confluent:kafka-avro-serializer:6.1.1') {
+        exclude module: 'kafka-clients'
+    }
+}
+
+tasks.withType(Test) {
+    useJUnitPlatform()
+}
+
+// === Spring Boot Configuration ===
+springBoot {
+    buildInfo {
+        properties {
+            time = null
+        }
+    }
+}
+
+// === Wrapper Configuration ===
+wrapper {
+    distributionType = Wrapper.DistributionType.ALL
+}

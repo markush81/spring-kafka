@@ -1,0 +1,20 @@
+.gradle
+build/
+out
+
+# Ignore Gradle GUI config
+gradle-app.setting
+
+# Cache of project
+.gradletasknamecache
+
+# IntelliJ IDEA
+.idea/*
+*.iml
+!.idea/runConfigurations
+
+# Project Runtime Files
+log
+
+**/.rootCA.key
+**/*.pem

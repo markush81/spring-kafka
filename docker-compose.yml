@@ -1,0 +1,84 @@
+---
+version: '3.8'
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:6.1.1
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    hostname: zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  broker:
+    image: confluentinc/cp-kafka:6.1.1
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    hostname: broker
+    container_name: broker
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "9101:9101"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+      KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      CONFLUENT_METRICS_ENABLE: 'false'
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:6.1.1
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    hostname: schema-registry
+    container_name: schema-registry
+    depends_on:
+      - broker
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'broker:29092'
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+
+  spring-kafka-app:
+    image: gcr.io/distroless/java@sha256:f87dc3f7de32c36b77a0b50c3f8e4e9d76e846d26fb9287ea69512e4f5b7127d
+    container_name: app
+    command: "./app.jar"
+    depends_on:
+      - broker
+    ports:
+      - "8080:8080"
+      - "8082:8082"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: 'broker:29092'
+      SPRING_KAFKA_CONSUMER_PROPERTIES_SCHEMA_REGISTRY_URL: 'http://schema-registry:8081'
+      SPRING_KAFKA_PRODUCER_PROPERTIES_SCHEMA_REGISTRY_URL: 'http://schema-registry:8081'
+    volumes:
+      - './build/libs/spring-kafka.jar:/app.jar'
